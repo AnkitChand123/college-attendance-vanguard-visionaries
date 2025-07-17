@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, User, RefreshCw, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { MapPin, User, RefreshCw, Clock, AlertCircle, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import AttendanceService from '@/services/AttendanceService';
 import LocationService from '@/services/LocationService';
@@ -16,14 +16,24 @@ interface StudentPanelProps {
   onWindowUpdate: (status: boolean) => void;
 }
 
+interface AuthenticatedStudent {
+  prn: string;
+  fullName: string;
+}
+
 const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowUpdate }) => {
   const [fullName, setFullName] = useState('');
   const [prn, setPrn] = useState('');
+  const [password, setPassword] = useState('');
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [prnOptions, setPrnOptions] = useState<Array<{ prn: string; name: string | null }>>([]);
+  const [authenticatedStudent, setAuthenticatedStudent] = useState<AuthenticatedStudent | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showAuthForm, setShowAuthForm] = useState(false);
   
   const { allowedLocation, loading: realtimeLoading } = useRealtimeAttendance();
 
@@ -90,7 +100,7 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
     }
   };
 
-  const markAttendance = async () => {
+  const authenticateStudent = async () => {
     if (!prn.trim()) {
       toast({
         title: "PRN Required",
@@ -100,10 +110,71 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
       return;
     }
 
-    if (!fullName.trim()) {
+    if (!password.trim()) {
       toast({
-        title: "Name Missing",
-        description: "Full name is required",
+        title: "Password Required",
+        description: "Please enter your password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      // For now, use a simple password check. In production, this should be a proper authentication system
+      const isValidPassword = password === 'student123'; // This should be replaced with proper authentication
+      
+      if (isValidPassword) {
+        setAuthenticatedStudent({ prn, fullName });
+        toast({
+          title: "Authentication Successful",
+          description: `Welcome, ${fullName}!`,
+        });
+        setPassword('');
+        setShowAuthForm(false);
+      } else {
+        toast({
+          title: "Authentication Failed",
+          description: "Invalid password. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Authentication Error",
+        description: "An error occurred during authentication.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setAuthenticatedStudent(null);
+    setPrn('');
+    setFullName('');
+    setPassword('');
+    setShowAuthForm(false);
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully.",
+    });
+  };
+
+  const handleMarkAttendanceClick = () => {
+    if (!authenticatedStudent) {
+      setShowAuthForm(true);
+      return;
+    }
+    markAttendance();
+  };
+
+  const markAttendance = async () => {
+    if (!authenticatedStudent) {
+      toast({
+        title: "Authentication Required",
+        description: "Please authenticate first to mark attendance",
         variant: "destructive",
       });
       return;
@@ -129,16 +200,17 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
 
     setIsLoading(true);
     try {
-      const result = await AttendanceService.markAttendance(fullName, prn, currentLocation);
+      const result = await AttendanceService.markAttendance(
+        authenticatedStudent.fullName, 
+        authenticatedStudent.prn, 
+        currentLocation
+      );
       
       if (result.success) {
         toast({
           title: "Attendance Marked Successfully!",
           description: `Distance from attendance zone: ${result.distance?.toFixed(0)}m`,
         });
-        setFullName('');
-        setPrn('');
-        setDistance(null);
       } else {
         toast({
           title: "Attendance Failed",
@@ -163,6 +235,26 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
 
   return (
     <div className="space-y-6">
+      {/* Authentication Status */}
+      {authenticatedStudent && (
+        <Card className="border-2 border-green-200 bg-green-50">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-green-700">
+                <CheckCircle className="h-5 w-5" />
+                <div>
+                  <p className="font-semibold">Authenticated as {authenticatedStudent.fullName}</p>
+                  <p className="text-sm text-green-600">PRN: {authenticatedStudent.prn}</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-2 border-blue-200">
         <CardHeader className="bg-blue-50">
           <CardTitle className="flex items-center gap-2 text-blue-800">
@@ -171,60 +263,134 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <Label htmlFor="prn">Select Your PRN *</Label>
-              <Select value={prn} onValueChange={handlePRNChange} required>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Choose your PRN" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60 bg-background border border-border">
-                  {prnOptions.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">No PRNs available</div>
-                  ) : (
-                    prnOptions.map((option) => (
-                      <SelectItem key={option.prn} value={option.prn}>
-                        {option.prn} {option.name ? `- ${option.name}` : ''}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Auto-filled from PRN selection"
-                className="mt-1"
-                readOnly
-                disabled
-              />
-            </div>
-          </div>
+          {!showAuthForm ? (
+            // Main attendance interface
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <Label htmlFor="prn">Select Your PRN *</Label>
+                  <Select value={prn} onValueChange={handlePRNChange} required disabled={!!authenticatedStudent}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Choose your PRN" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 bg-background border border-border">
+                      {prnOptions.length === 0 ? (
+                        <div className="p-2 text-sm text-gray-500">No PRNs available</div>
+                      ) : (
+                        prnOptions.map((option) => (
+                          <SelectItem key={option.prn} value={option.prn}>
+                            {option.prn} {option.name ? `- ${option.name}` : ''}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Auto-filled from PRN selection"
+                    className="mt-1"
+                    readOnly
+                    disabled
+                  />
+                </div>
+              </div>
 
-          <div className="flex gap-3 mb-6">
-            <Button 
-              onClick={markAttendance} 
-              disabled={isLoading || !attendanceWindow || !currentLocation}
-              className="flex-1"
-            >
-              {isLoading ? 'Marking...' : 'Mark Attendance'}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={getCurrentLocation}
-              disabled={locationLoading}
-              className="flex items-center gap-2"
-            >
-              <MapPin className={`h-4 w-4 ${locationLoading ? 'animate-pulse' : ''}`} />
-              {locationLoading ? 'Getting...' : 'Location'}
-            </Button>
-          </div>
+              <div className="flex gap-3 mb-6">
+                <Button 
+                  onClick={handleMarkAttendanceClick} 
+                  disabled={isLoading || !attendanceWindow || !currentLocation || !prn}
+                  className="flex-1"
+                >
+                  {isLoading ? 'Marking...' : 'Mark Attendance'}
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={getCurrentLocation}
+                  disabled={locationLoading}
+                  className="flex items-center gap-2"
+                >
+                  <MapPin className={`h-4 w-4 ${locationLoading ? 'animate-pulse' : ''}`} />
+                  {locationLoading ? 'Getting...' : 'Location'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // Authentication form
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <Lock className="h-8 w-8 mx-auto text-blue-600 mb-2" />
+                <h3 className="text-lg font-semibold text-blue-800">Authentication Required</h3>
+                <p className="text-sm text-gray-600">Please enter your password to mark attendance</p>
+              </div>
+
+              <div>
+                <Label htmlFor="auth-prn">PRN</Label>
+                <Input
+                  id="auth-prn"
+                  value={prn}
+                  placeholder="Your PRN"
+                  disabled
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="mt-1 pr-10"
+                    onKeyPress={(e) => e.key === 'Enter' && authenticateStudent()}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Demo password: student123</p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={authenticateStudent}
+                  disabled={isAuthenticating || !password}
+                  className="flex-1"
+                >
+                  {isAuthenticating ? 'Authenticating...' : 'Login'}
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setShowAuthForm(false);
+                    setPassword('');
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
