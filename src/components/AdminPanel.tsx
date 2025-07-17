@@ -96,7 +96,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isAdmin, onLogin, onLogout }) =
       // Student-wise stats
       if (!studentStats[prn]) {
         studentStats[prn] = {
-          fullName: record.fullName,
+          fullName: record.full_name,
           prn: prn,
           totalAttempts: 0,
           successfulAttempts: 0,
@@ -189,7 +189,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isAdmin, onLogin, onLogout }) =
     });
 
     setStudentData({
-      fullName: studentRecords[0].fullName,
+      fullName: studentRecords[0].full_name,
       prn: selectedPRN,
       totalAttempts,
       successfulAttempts,
@@ -462,7 +462,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isAdmin, onLogin, onLogout }) =
                       <TableBody>
                         {analytics.selectedDayStats?.map((record: any, index: number) => (
                           <TableRow key={index}>
-                            <TableCell className="font-medium">{record.fullName}</TableCell>
+                            <TableCell className="font-medium">{record.full_name}</TableCell>
                             <TableCell>{record.prn}</TableCell>
                             <TableCell className="text-sm">
                               {new Date(record.timestamp).toLocaleTimeString()}

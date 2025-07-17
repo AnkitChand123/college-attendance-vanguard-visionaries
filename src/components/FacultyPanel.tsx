@@ -79,16 +79,16 @@ const FacultyPanel: React.FC<FacultyPanelProps> = ({
     }
   };
 
-  const updateLocation = () => {
-    AttendanceService.setAllowedLocation(allowedLocation.lat, allowedLocation.lng, allowedLocation.radius);
+  const updateLocation = async () => {
+    await AttendanceService.setAllowedLocation(allowedLocation.lat, allowedLocation.lng, allowedLocation.radius);
     toast({
       title: "Location Updated",
       description: "Allowed location has been updated successfully",
     });
   };
 
-  const toggleAttendanceWindow = (checked: boolean) => {
-    AttendanceService.setAttendanceWindow(checked);
+  const toggleAttendanceWindow = async (checked: boolean) => {
+    await AttendanceService.setAttendanceWindow(checked);
     onWindowUpdate(checked);
     toast({
       title: checked ? "Attendance Window Opened" : "Attendance Window Closed",
@@ -110,7 +110,7 @@ const FacultyPanel: React.FC<FacultyPanelProps> = ({
     const csvContent = [
       headers.join(','),
       ...attendanceRecords.map(record => [
-        record.fullName,
+        record.full_name,
         record.prn,
         record.timestamp,
         record.location.lat.toFixed(6),
@@ -134,10 +134,10 @@ const FacultyPanel: React.FC<FacultyPanelProps> = ({
     });
   };
 
-  const clearAllRecords = () => {
+  const clearAllRecords = async () => {
     if (window.confirm('Are you sure you want to clear all attendance records? This action cannot be undone.')) {
-      AttendanceService.clearAllRecords();
-      setAttendanceRecords([]);
+      await AttendanceService.clearAllRecords();
+      await loadAttendanceRecords();
       toast({
         title: "Records Cleared",
         description: "All attendance records have been cleared",
@@ -345,7 +345,7 @@ const FacultyPanel: React.FC<FacultyPanelProps> = ({
                 ) : (
                   attendanceRecords.slice(-10).reverse().map((record, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{record.fullName}</TableCell>
+                      <TableCell className="font-medium">{record.full_name}</TableCell>
                       <TableCell>{record.prn}</TableCell>
                       <TableCell className="text-sm">
                         {new Date(record.timestamp).toLocaleString()}

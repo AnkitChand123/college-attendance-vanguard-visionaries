@@ -155,12 +155,18 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Choose your PRN" />
                 </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {prnOptions.map((option) => (
-                    <SelectItem key={option.prn} value={option.prn}>
-                      {option.prn} {option.name ? `- ${option.name}` : ''}
+                <SelectContent className="max-h-60 bg-background border border-border">
+                  {prnOptions.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      No PRNs available
                     </SelectItem>
-                  ))}
+                  ) : (
+                    prnOptions.map((option) => (
+                      <SelectItem key={option.prn} value={option.prn}>
+                        {option.prn} {option.name ? `- ${option.name}` : ''}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -189,10 +195,11 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
             <Button 
               variant="outline" 
               onClick={getCurrentLocation}
+              disabled={locationLoading}
               className="flex items-center gap-2"
             >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
+              <MapPin className={`h-4 w-4 ${locationLoading ? 'animate-pulse' : ''}`} />
+              {locationLoading ? 'Getting...' : 'Location'}
             </Button>
           </div>
         </CardContent>
