@@ -46,20 +46,32 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
   const getCurrentLocation = async () => {
     setLocationLoading(true);
     try {
+      console.log('🔍 Getting current location...');
       const location = await LocationService.getCurrentLocation();
+      console.log('📍 Current location received:', location);
       setCurrentLocation(location);
       
       if (allowedLocation && (allowedLocation.lat !== 0 || allowedLocation.lng !== 0)) {
+        console.log('🎯 Allowed location:', allowedLocation);
         const calculatedDistance = AttendanceService.calculateDistance(
           location.lat,
           location.lng,
           allowedLocation.lat,
           allowedLocation.lng
         );
+        console.log('📏 Distance calculated:', calculatedDistance, 'meters');
         setDistance(calculatedDistance);
+        
+        // Show location info in toast for debugging
+        toast({
+          title: "Location Debug Info",
+          description: `Current: ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)} | Allowed: ${allowedLocation.lat.toFixed(6)}, ${allowedLocation.lng.toFixed(6)} | Distance: ${calculatedDistance.toFixed(0)}m`,
+        });
+      } else {
+        console.log('⚠️ No allowed location set');
       }
     } catch (error) {
-      console.error('Error getting location:', error);
+      console.error('❌ Error getting location:', error);
       toast({
         title: "Location Error",
         description: "Failed to get your current location. Please enable location access.",
