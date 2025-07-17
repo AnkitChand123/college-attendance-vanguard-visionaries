@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -143,9 +142,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               <Shield className="h-4 w-4 mr-2" />
               Login as Admin
             </Button>
-            <p className="text-sm text-gray-600 text-center">
-              Default password: admin123
-            </p>
           </div>
         </CardContent>
       </Card>
