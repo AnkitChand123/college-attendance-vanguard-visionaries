@@ -34,7 +34,9 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
 
   const loadPRNOptions = async () => {
     try {
+      console.log('Loading PRN options...');
       const options = await AttendanceService.getPRNOptions();
+      console.log('PRN options loaded:', options);
       setPrnOptions(options);
     } catch (error) {
       console.error('Error loading PRN options:', error);

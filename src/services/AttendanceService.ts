@@ -244,6 +244,7 @@ class AttendanceService {
 
   static async getPRNOptions(): Promise<Array<{ prn: string; name: string | null }>> {
     try {
+      console.log('Fetching PRN options from database...');
       const { data, error } = await supabase
         .from('PRNs')
         .select('PRN, Name')
@@ -254,10 +255,15 @@ class AttendanceService {
         return [];
       }
 
-      return data?.map(item => ({ 
+      console.log('Raw data from database:', data);
+      
+      const mappedData = data?.map(item => ({ 
         prn: item.PRN.toString(), 
         name: item.Name 
       })) || [];
+      
+      console.log('Mapped PRN data:', mappedData);
+      return mappedData;
     } catch (error) {
       console.error('Error in getPRNOptions:', error);
       return [];
