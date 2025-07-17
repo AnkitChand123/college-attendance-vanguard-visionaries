@@ -15,6 +15,12 @@ interface StudentDashboardProps {
   isFaculty: boolean;
 }
 
+interface MonthlyStats {
+  total: number;
+  successful: number;
+  failed: number;
+}
+
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ isFaculty }) => {
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [selectedPRN, setSelectedPRN] = useState('');
@@ -262,17 +268,20 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ isFaculty }) => {
                   {Object.entries(studentData.monthlyStats)
                     .sort(([a], [b]) => b.localeCompare(a))
                     .slice(0, 6)
-                    .map(([month, stats]) => (
-                    <div key={month} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <span className="font-medium">
-                        {new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                      </span>
-                      <div className="flex gap-2">
-                        <Badge variant="default">{stats.successful}</Badge>
-                        <Badge variant="destructive">{stats.failed}</Badge>
-                      </div>
-                    </div>
-                  ))}
+                    .map(([month, stats]) => {
+                      const monthlyStats = stats as MonthlyStats;
+                      return (
+                        <div key={month} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                          <span className="font-medium">
+                            {new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                          </span>
+                          <div className="flex gap-2">
+                            <Badge variant="default">{monthlyStats.successful}</Badge>
+                            <Badge variant="destructive">{monthlyStats.failed}</Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </CardContent>
             </Card>

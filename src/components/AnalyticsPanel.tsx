@@ -14,10 +14,32 @@ interface AnalyticsPanelProps {
   isFaculty: boolean;
 }
 
+interface StudentStats {
+  fullName: string;
+  prn: string;
+  totalAttempts: number;
+  successfulAttempts: number;
+  failedAttempts: number;
+  lastAttempt: string;
+  attendanceRate: number;
+}
+
+interface DailyStats {
+  date: string;
+  totalAttempts: number;
+  successfulAttempts: number;
+  failedAttempts: number;
+  uniqueStudents: number;
+}
+
 const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ isFaculty }) => {
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [analytics, setAnalytics] = useState<any>({});
+  const [analytics, setAnalytics] = useState<{
+    studentStats?: StudentStats[];
+    dailyStats?: DailyStats[];
+    selectedDayStats?: any[];
+  }>({});
 
   useEffect(() => {
     if (isFaculty) {
@@ -103,8 +125,8 @@ const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ isFaculty }) => {
     });
 
     setAnalytics({
-      studentStats: Object.values(studentStats),
-      dailyStats: Object.values(dailyStats).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      studentStats: Object.values(studentStats) as StudentStats[],
+      dailyStats: (Object.values(dailyStats) as DailyStats[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
       selectedDayStats: filteredRecords
     });
   };
