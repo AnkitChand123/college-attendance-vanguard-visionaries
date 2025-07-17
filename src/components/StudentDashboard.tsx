@@ -44,8 +44,8 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ isFaculty }) => {
     }
   }, [selectedPRN, attendanceRecords]);
 
-  const loadAttendanceRecords = () => {
-    const records = AttendanceService.getAttendanceRecords();
+  const loadAttendanceRecords = async () => {
+    const records = await AttendanceService.getAttendanceRecords();
     setAttendanceRecords(records);
   };
 

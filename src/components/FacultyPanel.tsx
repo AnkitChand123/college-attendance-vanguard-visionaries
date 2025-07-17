@@ -34,14 +34,17 @@ const FacultyPanel: React.FC<FacultyPanelProps> = ({
 
   useEffect(() => {
     if (isFaculty) {
-      const location = AttendanceService.getAllowedLocation();
-      setAllowedLocation(location);
-      loadAttendanceRecords();
+      const loadData = async () => {
+        const location = await AttendanceService.getAllowedLocation();
+        setAllowedLocation(location);
+        await loadAttendanceRecords();
+      };
+      loadData();
     }
   }, [isFaculty]);
 
-  const loadAttendanceRecords = () => {
-    const records = AttendanceService.getAttendanceRecords();
+  const loadAttendanceRecords = async () => {
+    const records = await AttendanceService.getAttendanceRecords();
     setAttendanceRecords(records);
   };
 

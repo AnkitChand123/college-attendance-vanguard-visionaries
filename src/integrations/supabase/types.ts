@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          created_at: string
+          distance: number
+          full_name: string
+          id: string
+          location: Json
+          prn: string
+          success: boolean
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          distance: number
+          full_name: string
+          id?: string
+          location: Json
+          prn: string
+          success?: boolean
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          distance?: number
+          full_name?: string
+          id?: string
+          location?: Json
+          prn?: string
+          success?: boolean
+          timestamp?: string
+        }
+        Relationships: []
+      }
+      attendance_sessions: {
+        Row: {
+          closed_at: string | null
+          created_by: string | null
+          id: string
+          is_open: boolean
+          opened_at: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_open?: boolean
+          opened_at?: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_open?: boolean
+          opened_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      attendance_settings: {
+        Row: {
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       PRNs: {
         Row: {
           Name: string | null

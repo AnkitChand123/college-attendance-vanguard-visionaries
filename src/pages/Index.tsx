@@ -17,8 +17,11 @@ const Index = () => {
 
   useEffect(() => {
     // Check if attendance window is open
-    const windowStatus = AttendanceService.getAttendanceWindow();
-    setAttendanceWindow(windowStatus);
+    const loadAttendanceWindow = async () => {
+      const windowStatus = await AttendanceService.getAttendanceWindow();
+      setAttendanceWindow(windowStatus);
+    };
+    loadAttendanceWindow();
   }, []);
 
   const handleFacultyLogin = (password: string) => {

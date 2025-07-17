@@ -53,8 +53,8 @@ const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({ isFaculty }) => {
     }
   }, [attendanceRecords, selectedDate]);
 
-  const loadAttendanceRecords = () => {
-    const records = AttendanceService.getAttendanceRecords();
+  const loadAttendanceRecords = async () => {
+    const records = await AttendanceService.getAttendanceRecords();
     setAttendanceRecords(records);
   };
 
