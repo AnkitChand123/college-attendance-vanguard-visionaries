@@ -105,11 +105,11 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger value="faculty" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              Faculty Panel
+              Faculty Portal
             </TabsTrigger>
             <TabsTrigger value="admin" className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" />
-              Admin Panel
+              Admin Portal
             </TabsTrigger>
           </TabsList>
 

@@ -91,10 +91,19 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
   };
 
   const markAttendance = async () => {
-    if (!fullName.trim() || !prn.trim()) {
+    if (!prn.trim()) {
       toast({
-        title: "Missing Information",
-        description: "Please enter both name and PRN",
+        title: "PRN Required",
+        description: "Please select your PRN",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!fullName.trim()) {
+      toast({
+        title: "Name Missing",
+        description: "Full name is required",
         variant: "destructive",
       });
       return;
@@ -164,8 +173,8 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <Label htmlFor="prn">Select Your PRN</Label>
-              <Select value={prn} onValueChange={handlePRNChange}>
+              <Label htmlFor="prn">Select Your PRN *</Label>
+              <Select value={prn} onValueChange={handlePRNChange} required>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Choose your PRN" />
                 </SelectTrigger>
@@ -189,8 +198,10 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
                 id="fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
+                placeholder="Auto-filled from PRN selection"
                 className="mt-1"
+                readOnly
+                disabled
               />
             </div>
           </div>

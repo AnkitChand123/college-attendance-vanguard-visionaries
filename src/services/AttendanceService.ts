@@ -25,6 +25,12 @@ class AttendanceService {
     currentLocation: { lat: number; lng: number }
   ): Promise<{ success: boolean; distance?: number; error?: string }> {
     try {
+      // Check if attendance window is open first
+      const attendanceWindow = await this.getAttendanceWindow();
+      if (!attendanceWindow) {
+        return { success: false, error: 'Attendance window is closed' };
+      }
+
       const allowedLocation = await this.getAllowedLocation();
       console.log('Marking attendance - Allowed location:', allowedLocation);
       console.log('Current location:', currentLocation);
