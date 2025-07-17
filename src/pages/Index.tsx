@@ -7,12 +7,12 @@ import { MapPin, Users, Settings, Shield, BarChart3, UserCheck } from 'lucide-re
 import { toast } from '@/hooks/use-toast';
 import StudentPanel from '@/components/StudentPanel';
 import FacultyPanel from '@/components/FacultyPanel';
-import AnalyticsPanel from '@/components/AnalyticsPanel';
-import StudentDashboard from '@/components/StudentDashboard';
+import AdminPanel from '@/components/AdminPanel';
 import AttendanceService from '@/services/AttendanceService';
 
 const Index = () => {
   const [isFaculty, setIsFaculty] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [attendanceWindow, setAttendanceWindow] = useState(true);
 
   useEffect(() => {
@@ -38,8 +38,33 @@ const Index = () => {
     return false;
   };
 
-  const handleLogout = () => {
+  const handleAdminLogin = (password: string) => {
+    if (password === 'superadmin123') {
+      setIsAdmin(true);
+      toast({
+        title: "Admin Login Successful",
+        description: "Welcome to the admin panel",
+      });
+      return true;
+    }
+    toast({
+      title: "Login Failed",
+      description: "Invalid admin password",
+      variant: "destructive",
+    });
+    return false;
+  };
+
+  const handleFacultyLogout = () => {
     setIsFaculty(false);
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully",
+    });
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdmin(false);
     toast({
       title: "Logged Out",
       description: "You have been logged out successfully",
@@ -57,7 +82,7 @@ const Index = () => {
           <p className="text-gray-600">Location-based attendance tracking for secure check-ins</p>
         </header>
 
-        {!attendanceWindow && !isFaculty && (
+        {!attendanceWindow && !isFaculty && !isAdmin && (
           <Card className="mb-6 border-orange-200 bg-orange-50">
             <CardContent className="pt-6">
               <div className="text-center text-orange-800">
@@ -70,7 +95,7 @@ const Index = () => {
         )}
 
         <Tabs defaultValue="student" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="student" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Student Portal
@@ -79,13 +104,9 @@ const Index = () => {
               <Settings className="h-4 w-4" />
               Faculty Panel
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <TabsTrigger value="admin" className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" />
-              Student Dashboard
+              Admin Panel
             </TabsTrigger>
           </TabsList>
 
@@ -100,18 +121,18 @@ const Index = () => {
             <FacultyPanel 
               isFaculty={isFaculty}
               onLogin={handleFacultyLogin}
-              onLogout={handleLogout}
+              onLogout={handleFacultyLogout}
               attendanceWindow={attendanceWindow}
               onWindowUpdate={setAttendanceWindow}
             />
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <AnalyticsPanel isFaculty={isFaculty} />
-          </TabsContent>
-
-          <TabsContent value="dashboard">
-            <StudentDashboard isFaculty={isFaculty} />
+          <TabsContent value="admin">
+            <AdminPanel 
+              isAdmin={isAdmin}
+              onLogin={handleAdminLogin}
+              onLogout={handleAdminLogout}
+            />
           </TabsContent>
         </Tabs>
       </div>
