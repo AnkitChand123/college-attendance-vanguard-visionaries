@@ -9,6 +9,7 @@ class LocationService {
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          console.log('Got current location:', position.coords.latitude, position.coords.longitude);
           resolve({
             lat: position.coords.latitude,
             lng: position.coords.longitude
@@ -27,6 +28,7 @@ class LocationService {
               errorMessage = 'Location request timed out';
               break;
           }
+          console.error('Geolocation error:', errorMessage);
           reject(new Error(errorMessage));
         },
         {
@@ -55,7 +57,9 @@ class LocationService {
               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    return R * c; // Distance in meters
+    const distance = R * c; // Distance in meters
+    console.log('Calculated distance:', distance, 'meters');
+    return distance;
   }
 
   static isWithinRadius(
@@ -66,7 +70,9 @@ class LocationService {
     radius: number
   ): boolean {
     const distance = this.calculateDistance(currentLat, currentLng, allowedLat, allowedLng);
-    return distance <= radius;
+    const isWithin = distance <= radius;
+    console.log('Is within radius?', isWithin, 'Distance:', distance, 'Allowed radius:', radius);
+    return isWithin;
   }
 }
 

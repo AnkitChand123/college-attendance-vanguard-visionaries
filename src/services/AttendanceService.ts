@@ -23,9 +23,10 @@ class AttendanceService {
     ATTENDANCE_WINDOW: 'geoAttendance_window'
   };
 
-  private static readonly DEFAULT_LOCATION: AllowedLocation = {
-    lat: 19.0760, // Mumbai coordinates as default
-    lng: 72.8777,
+  // Remove default location - use only admin-set locations
+  private static readonly FALLBACK_LOCATION: AllowedLocation = {
+    lat: 0,
+    lng: 0,
     radius: 100
   };
 
@@ -35,6 +36,9 @@ class AttendanceService {
     currentLocation: { lat: number; lng: number }
   ): Promise<{ success: boolean; distance?: number }> {
     const allowedLocation = this.getAllowedLocation();
+    console.log('Marking attendance - Allowed location:', allowedLocation);
+    console.log('Current location:', currentLocation);
+    
     const distance = LocationService.calculateDistance(
       currentLocation.lat,
       currentLocation.lng,
@@ -43,6 +47,7 @@ class AttendanceService {
     );
 
     const success = distance <= allowedLocation.radius;
+    console.log('Attendance result:', { success, distance, radius: allowedLocation.radius });
     
     const record: AttendanceRecord = {
       fullName,
@@ -76,11 +81,23 @@ class AttendanceService {
   static setAllowedLocation(lat: number, lng: number, radius: number): void {
     const location: AllowedLocation = { lat, lng, radius };
     localStorage.setItem(this.STORAGE_KEYS.ALLOWED_LOCATION, JSON.stringify(location));
+    console.log('Allowed location updated:', location);
   }
 
   static getAllowedLocation(): AllowedLocation {
     const stored = localStorage.getItem(this.STORAGE_KEYS.ALLOWED_LOCATION);
-    return stored ? JSON.parse(stored) : this.DEFAULT_LOCATION;
+    if (stored) {
+      const location = JSON.parse(stored);
+      console.log('Retrieved allowed location from storage:', location);
+      return location;
+    }
+    console.log('No allowed location set, using fallback:', this.FALLBACK_LOCATION);
+    return this.FALLBACK_LOCATION;
+  }
+
+  static hasAllowedLocationBeenSet(): boolean {
+    const stored = localStorage.getItem(this.STORAGE_KEYS.ALLOWED_LOCATION);
+    return stored !== null;
   }
 
   static setAttendanceWindow(isOpen: boolean): void {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, CheckCircle, XCircle, RefreshCw, Clock } from 'lucide-react';
+import { MapPin, CheckCircle, XCircle, RefreshCw, Clock, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import AttendanceService from '@/services/AttendanceService';
 import LocationService from '@/services/LocationService';
@@ -19,6 +19,7 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
   const [fullName, setFullName] = useState('');
   const [prn, setPrn] = useState('');
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [allowedLocation, setAllowedLocation] = useState<{lat: number, lng: number, radius: number} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [distance, setDistance] = useState<number | null>(null);
   const [isInRange, setIsInRange] = useState(false);
@@ -45,31 +46,47 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
     });
   };
 
+  const loadAllowedLocation = () => {
+    const location = AttendanceService.getAllowedLocation();
+    setAllowedLocation(location);
+    console.log('Loaded allowed location in student panel:', location);
+  };
+
   const getCurrentLocation = async () => {
     setIsLoading(true);
     try {
       const location = await LocationService.getCurrentLocation();
       setCurrentLocation(location);
+      console.log('Got current location in student panel:', location);
       
-      const allowedLocation = AttendanceService.getAllowedLocation();
-      const calculatedDistance = LocationService.calculateDistance(
-        location.lat,
-        location.lng,
-        allowedLocation.lat,
-        allowedLocation.lng
-      );
-      
-      setDistance(calculatedDistance);
-      setIsInRange(calculatedDistance <= allowedLocation.radius);
-      
-      toast({
-        title: "Location Updated",
-        description: `Distance from allowed zone: ${calculatedDistance.toFixed(0)}m`,
-      });
+      const allowedLoc = AttendanceService.getAllowedLocation();
+      if (allowedLoc.lat !== 0 || allowedLoc.lng !== 0) {
+        const calculatedDistance = LocationService.calculateDistance(
+          location.lat,
+          location.lng,
+          allowedLoc.lat,
+          allowedLoc.lng
+        );
+        
+        setDistance(calculatedDistance);
+        setIsInRange(calculatedDistance <= allowedLoc.radius);
+        
+        toast({
+          title: "Location Updated",
+          description: `Distance from attendance zone: ${calculatedDistance.toFixed(0)}m`,
+        });
+      } else {
+        toast({
+          title: "No Attendance Zone Set",
+          description: "Admin hasn't configured the attendance zone yet",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
+      console.error('Location error:', error);
       toast({
         title: "Location Error",
-        description: "Unable to get your current location",
+        description: "Unable to get your current location. Please check your browser permissions.",
         variant: "destructive",
       });
     } finally {
@@ -105,6 +122,16 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
       return;
     }
 
+    const allowedLoc = AttendanceService.getAllowedLocation();
+    if (allowedLoc.lat === 0 && allowedLoc.lng === 0) {
+      toast({
+        title: "Attendance Zone Not Set",
+        description: "Admin hasn't configured the attendance zone yet",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const location = await LocationService.getCurrentLocation();
@@ -113,14 +140,14 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
       if (result.success) {
         toast({
           title: "✅ Attendance Marked Successfully",
-          description: `Welcome ${fullName}! You are ${result.distance?.toFixed(0)}m from the allowed zone.`,
+          description: `Welcome ${fullName}! You are ${result.distance?.toFixed(0)}m from the attendance zone.`,
         });
         setCurrentLocation(location);
         setDistance(result.distance || 0);
         setIsInRange(true);
       } else {
         toast({
-          title: "❌ You are not inside the allowed zone",
+          title: "❌ You are not inside the attendance zone",
           description: `You are ${result.distance?.toFixed(0)}m away from the allowed location.`,
           variant: "destructive",
         });
@@ -129,6 +156,7 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
         setIsInRange(false);
       }
     } catch (error) {
+      console.error('Attendance marking error:', error);
       toast({
         title: "Error",
         description: "Failed to mark attendance. Please try again.",
@@ -140,8 +168,12 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
   };
 
   useEffect(() => {
+    loadAllowedLocation();
     getCurrentLocation();
   }, []);
+
+  // Check if admin has set location
+  const hasAttendanceZone = allowedLocation && (allowedLocation.lat !== 0 || allowedLocation.lng !== 0);
 
   return (
     <div className="space-y-6">
@@ -204,21 +236,54 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
             </div>
 
             <div className="space-y-4">
-              {currentLocation && (
+              {/* Attendance Zone Information */}
+              {hasAttendanceZone ? (
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <h4 className="font-semibold text-green-700 mb-2 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Attendance Zone
+                  </h4>
+                  <p className="text-sm text-green-600">
+                    Lat: {allowedLocation!.lat.toFixed(6)}<br />
+                    Lng: {allowedLocation!.lng.toFixed(6)}<br />
+                    Radius: {allowedLocation!.radius}m
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <h4 className="font-semibold text-orange-700 mb-2 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    No Attendance Zone Set
+                  </h4>
+                  <p className="text-sm text-orange-600">
+                    Admin hasn't configured the attendance zone yet
+                  </p>
+                </div>
+              )}
+
+              {/* Current Location Information */}
+              {currentLocation ? (
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-gray-700 mb-2">Current Location</h4>
                   <p className="text-sm text-gray-600">
                     Lat: {currentLocation.lat.toFixed(6)}<br />
                     Lng: {currentLocation.lng.toFixed(6)}
                   </p>
-                  {distance !== null && (
+                  {distance !== null && hasAttendanceZone && (
                     <div className={`mt-2 flex items-center gap-2 ${isInRange ? 'text-green-600' : 'text-red-600'}`}>
                       {isInRange ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                       <span className="text-sm font-medium">
-                        Distance: {distance.toFixed(0)}m from allowed zone
+                        Distance: {distance.toFixed(0)}m from attendance zone
                       </span>
                     </div>
                   )}
+                </div>
+              ) : (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-700 mb-2">Current Location</h4>
+                  <p className="text-sm text-gray-600">
+                    Click "Get Location" to fetch your current coordinates
+                  </p>
                 </div>
               )}
 
@@ -236,7 +301,7 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
           <div className="mt-6">
             <Button 
               onClick={markAttendance}
-              disabled={isLoading || !attendanceWindow}
+              disabled={isLoading || !attendanceWindow || !hasAttendanceZone}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"
             >
               {isLoading ? (
