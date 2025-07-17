@@ -157,9 +157,7 @@ const StudentPanel: React.FC<StudentPanelProps> = ({ attendanceWindow, onWindowU
                 </SelectTrigger>
                 <SelectContent className="max-h-60 bg-background border border-border">
                   {prnOptions.length === 0 ? (
-                    <SelectItem value="" disabled>
-                      No PRNs available
-                    </SelectItem>
+                    <div className="p-2 text-sm text-gray-500">No PRNs available</div>
                   ) : (
                     prnOptions.map((option) => (
                       <SelectItem key={option.prn} value={option.prn}>
