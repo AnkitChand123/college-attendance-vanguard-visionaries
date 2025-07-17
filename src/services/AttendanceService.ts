@@ -61,14 +61,15 @@ class AttendanceService {
       const success = distance <= allowedLocation.radius;
       console.log('Attendance result:', { success, distance, radius: allowedLocation.radius });
       
-      const { error } = await supabase
+        const { error } = await supabase
         .from('attendance_records')
         .insert({
           prn,
           full_name: fullName,
           location: currentLocation,
           distance,
-          success
+          success,
+          user_id: null // For non-authenticated marking (backward compatibility)
         });
 
       if (error) {
@@ -102,7 +103,13 @@ class AttendanceService {
     try {
       const { data, error } = await supabase
         .from('attendance_records')
-        .select('*')
+        .select(`
+          *,
+          student_profiles (
+            full_name,
+            prn
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -273,6 +280,73 @@ class AttendanceService {
     } catch (error) {
       console.error('Error in getPRNOptions:', error);
       return [];
+    }
+  }
+
+  // New method for authenticated users
+  static async markAttendanceForUser(
+    userId: string,
+    fullName: string, 
+    prn: string, 
+    currentLocation: { lat: number; lng: number }
+  ): Promise<{ success: boolean; distance?: number; error?: string }> {
+    try {
+      // Check if attendance window is open
+      const windowStatus = await this.getAttendanceWindow();
+      if (!windowStatus) {
+        return { 
+          success: false, 
+          error: 'Attendance window is currently closed.' 
+        };
+      }
+
+      // Get allowed location
+      const allowedLocation = await this.getAllowedLocation();
+      if (!allowedLocation) {
+        return { 
+          success: false, 
+          error: 'Allowed location not set. Please contact administrator.' 
+        };
+      }
+
+      // Calculate distance
+      const distance = this.calculateDistance(
+        currentLocation.lat,
+        currentLocation.lng,
+        allowedLocation.lat,
+        allowedLocation.lng
+      );
+
+      const success = distance <= allowedLocation.radius;
+
+      // Save attendance record with user_id
+      const { error: insertError } = await supabase
+        .from('attendance_records')
+        .insert({
+          user_id: userId,
+          full_name: fullName,
+          prn: prn,
+          timestamp: new Date().toISOString(),
+          location: currentLocation,
+          distance: distance,
+          success: success
+        });
+
+      if (insertError) {
+        console.error('Error inserting attendance record:', insertError);
+        return { 
+          success: false, 
+          error: 'Failed to save attendance record.' 
+        };
+      }
+
+      return { success, distance };
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      return { 
+        success: false, 
+        error: 'An unexpected error occurred.' 
+      };
     }
   }
 }

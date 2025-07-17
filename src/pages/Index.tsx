@@ -11,6 +11,7 @@ import AdminPanel from '@/components/AdminPanel';
 import AttendanceService from '@/services/AttendanceService';
 
 const Index = () => {
+  const { user } = useAuth();
   const [isFaculty, setIsFaculty] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [attendanceWindow, setAttendanceWindow] = useState(true);
@@ -114,10 +115,10 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="student">
-            <StudentPanel 
-              attendanceWindow={attendanceWindow} 
-              onWindowUpdate={setAttendanceWindow}
-            />
+                <AuthenticatedStudentDashboard 
+                  attendanceWindow={attendanceWindow}
+                  onWindowUpdate={setAttendanceWindow}
+                />
           </TabsContent>
 
           <TabsContent value="faculty">

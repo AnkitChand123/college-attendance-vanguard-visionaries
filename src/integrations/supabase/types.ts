@@ -24,6 +24,7 @@ export type Database = {
           prn: string
           success: boolean
           timestamp: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -34,6 +35,7 @@ export type Database = {
           prn: string
           success?: boolean
           timestamp?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -44,6 +46,7 @@ export type Database = {
           prn?: string
           success?: boolean
           timestamp?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -107,6 +110,39 @@ export type Database = {
         Update: {
           Name?: string | null
           PRN?: number
+        }
+        Relationships: []
+      }
+      student_profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          prn: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          prn: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          prn?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
